@@ -4,7 +4,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
-import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -17,6 +16,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Component
@@ -25,7 +26,7 @@ public class NewsTask {
     private NewsService newsService;
 
 
-    @Scheduled(fixedDelay = 10000)
+    @Scheduled(fixedDelay = 1000*60*20)
     public void parse(){
         System.out.println("Начало парсинга");
 
@@ -53,17 +54,23 @@ public class NewsTask {
                             .timeout(10000)
                             .get();
                     Element box = subDoc.getElementById("article-box");
-                    final String title = box.select("h1").text();
+                    String dateCreate = box.select("h1").select(".meta-data").text();
+                    box.select("h1").select(".meta-data").remove();
+                    final String title = box.select("h1").eachText().get(0);
                     box.select("h1").remove();
                     box.lastElementSibling().remove();
                     List<Node> nodes = box.childNodes();
                     StringBuilder text = new StringBuilder();
                     for (Node node: nodes) {
-                        text.append(node.toString());
+                        text.append(node.toString().trim());
                     }
 //                    final String text = ((TextNode) box.childNodes()).text();
                     if (!newsService.isExist(title)){
-                        News news = new News(title, text.toString());
+                        News news = new News(
+                                title,
+                                text.toString(),
+                                LocalDateTime.parse(dateCreate, DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))
+                        );
                         newsService.save(news);
                     }
                 }
