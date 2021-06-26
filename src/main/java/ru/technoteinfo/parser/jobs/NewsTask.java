@@ -8,6 +8,7 @@ import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import ru.technoteinfo.parser.Controllers.ConfigController;
 import ru.technoteinfo.parser.Entity.News;
 import ru.technoteinfo.parser.Services.NewsService;
 
@@ -31,12 +32,15 @@ import java.util.Random;
 
 @Component
 public class NewsTask {
+    public final String imgUrl = "https://img.technoteinfo.ru";
+
     @Autowired
     private NewsService newsService;
 
 
     @Scheduled(fixedDelay = 1000*60*20)
     public void parse(){
+        String imgPath = ConfigController.imgDir;
 
         System.out.println("Начало парсинга");
 
@@ -88,11 +92,11 @@ public class NewsTask {
                                     try {
                                         website = new URL(urlImg);
                                         try (InputStream stream = website.openStream()) {
-
-                                            File outputfile = new File("d:/pic/"+generateRandomString(12)+".jpg");
+                                            String filename = generateRandomString(12)+".jpg";
+                                            File outputfile = new File(imgPath+filename);
                                             OutputStream outStream = new FileOutputStream(outputfile);
                                             outStream.write(stream.readAllBytes());
-                                            img.attr("src", outputfile.toString());
+                                            img.attr("src", imgUrl+"/parser/"+filename);
                                         }catch (IOException error){
                                             error.printStackTrace();
                                         }
